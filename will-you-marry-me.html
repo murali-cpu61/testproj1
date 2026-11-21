@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Will You Marry Me?</title>
+<style>
+  :root { color-scheme: light; --pink: #d6336c; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #5a2a3d;
+    background:
+      radial-gradient(1200px 700px at 15% 12%, #fff0f6 0%, transparent 60%),
+      radial-gradient(900px 600px at 85% 88%, #ffe3f0 0%, transparent 65%),
+      linear-gradient(160deg, #ffd9e8 0%, #ffc0d5 40%, #ffb2cc 70%, #ffeef5 100%);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+  #bgLayer { z-index: 0; }
+  #loveLayer { z-index: 6; }
+
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+    z-index: 2;
+    opacity: 0; visibility: hidden;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .screen.active { opacity: 1; visibility: visible; }
+
+  .card {
+    width: 100%; max-width: 560px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 30px;
+    padding: clamp(30px, 7vw, 58px) clamp(22px, 6vw, 62px);
+    box-shadow:
+      0 26px 70px rgba(214, 51, 108, 0.28),
+      0 2px 0 rgba(255, 255, 255, 0.7) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.75);
+  }
+
+  h1, h2 {
+    font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+    color: var(--pink);
+    line-height: 1.25;
+    letter-spacing: .5px;
+  }
+  h1 { font-size: clamp(2rem, 8.5vw, 3.1rem); }
+  h2 { font-size: clamp(1.7rem, 7vw, 2.6rem); }
+
+  p.lead {
+    margin-top: 10px;
+    font-size: clamp(.95rem, 3.4vw, 1.05rem);
+    color: #8a4a61;
+  }
+
+  .btn-row {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    justify-content: center;
+    margin-top: clamp(22px, 6vw, 34px);
+  }
+
+  .btn {
+    border: 0; cursor: pointer;
+    font: inherit; font-weight: 700;
+    font-size: clamp(1rem, 3.6vw, 1.12rem);
+    padding: 14px 34px;
+    min-height: 52px;
+    border-radius: 999px;
+    touch-action: manipulation;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  #yesBtn {
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b9a, #d6336c);
+    box-shadow: 0 12px 26px rgba(214, 51, 108, 0.35);
+  }
+  #yesBtn:hover { transform: translateY(-2px) scale(1.04); }
+  #yesBtn:active { transform: scale(.98); }
+
+  #noBtn {
+    color: #9c5570;
+    background: #f7e6ed;
+    box-shadow: 0 6px 16px rgba(214, 51, 108, 0.12);
+    position: relative;
+    z-index: 8;
+    transition: transform .18s ease, left .22s ease, top .22s ease;
+  }
+
+  /* ---------- floating emojis ---------- */
+  .float-emoji {
+    position: absolute;
+    bottom: -12vh;
+    left: 0;
+    opacity: 0;
+    animation-name: floatUp;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 4px 10px rgba(214, 51, 108, .18));
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translate3d(0, 12vh, 0) rotate(-8deg) scale(.85); opacity: 0; }
+    12%  { opacity: var(--op, .95); }
+    88%  { opacity: var(--op, .95); }
+    100% { transform: translate3d(var(--drift, 0px), -115vh, 0) rotate(10deg) scale(1.1); opacity: 0; }
+  }
+
+  .big-emoji { font-size: clamp(2.2rem, 10vw, 3.2rem); line-height: 1; }
+  .romance {
+    margin-top: 14px;
+    font-size: clamp(.95rem, 3.6vw, 1.06rem);
+    line-height: 1.65;
+    color: #6b3548;
+  }
+  .signature {
+    margin-top: 18px;
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    font-size: clamp(1.1rem, 4.6vw, 1.35rem);
+    color: var(--pink);
+  }
+  .heart-btn {
+    margin-top: 24px;
+    background: #fff;
+    color: var(--pink);
+    box-shadow: 0 8px 20px rgba(214, 51, 108, 0.18);
+  }
+  .heart-btn:active { transform: scale(.97); }
+</style>
+</head>
+<body>
+
+  <!-- soft ambient hearts behind everything -->
+  <div class="layer" id="bgLayer"></div>
+
+  <!-- ===== Screen 1: the question ===== -->
+  <main class="screen active" id="askScreen">
+    <div class="card">
+      <h1>Will you marry me?</h1>
+      <p class="lead">There&rsquo;s only one answer I&rsquo;m hoping for&hellip; &#128149;</p>
+      <div class="btn-row">
+        <button class="btn" id="yesBtn" type="button">Yes</button>
+        <button class="btn" id="noBtn" type="button">No</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Screen 2: congratulations ===== -->
+  <section class="screen" id="celebrateScreen">
+    <div class="card">
+      <div class="big-emoji">&#128141;</div>
+      <h2>You said YES!</h2>
+      <p class="romance">
+        You just made me the happiest person in the world. Thank you for choosing me &mdash;
+        today, tomorrow, and every day after. I can&rsquo;t wait to laugh with you, travel with you,
+        dance in the kitchen with you, and build a home that&rsquo;s full of love.
+        You are my favourite hello and my forever. I love you more than words can ever say. &#10084;&#65039;
+      </p>
+      <p class="signature">Forever starts today &mdash; and I&rsquo;m already yours. — Murali</p>
+      <button class="btn heart-btn" id="moreLove" type="button">Tap for more love &#128150;</button>
+    </div>
+  </section>
+
+  <!-- hearts that float above the congratulations card -->
+  <div class="layer" id="loveLayer"></div>
+
+<script>
+  /* ---------------------------------------------------------
+     Helpers
+  --------------------------------------------------------- */
+  const FLOATING = ['\u{1F496}','\u{1F495}','\u{1F497}','\u{1F49E}','❤️','✨','\u{1F339}','\u{1F490}','\u{1F970}','\u{1F60D}','\u{1F48D}','\u{1F389}','\u{1F498}'];
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  const bgLayer = document.getElementById('bgLayer');
+  const loveLayer = document.getElementById('loveLayer');
+
+  function spawnEmoji(layer, opts = {}) {
+    const {
+      opacity = 0.95,
+      size = [18, 34],
+      duration = [8, 14],
+      delay = 0,
+      drift = 70
+    } = opts;
+
+    const el = document.createElement('span');
+    el.className = 'float-emoji';
+    el.textContent = pick(FLOATING);
+    el.style.left = rand(2, 96).toFixed(2) + 'vw';
+    el.style.fontSize = rand(size[0], size[1]).toFixed(0) + 'px';
+    el.style.animationDuration = rand(duration[0], duration[1]).toFixed(1) + 's';
+    el.style.animationDelay = delay.toFixed(2) + 's';
+    el.style.setProperty('--op', opacity);
+    el.style.setProperty('--drift', rand(-drift, drift).toFixed(0) + 'px');
+    layer.appendChild(el);
+
+    const life = (parseFloat(el.style.animationDuration) + delay + 0.6) * 1000;
+    setTimeout(() => el.remove(), life);
+  }
+
+  /* ---------------------------------------------------------
+     Ambient hearts on the asking screen
+  --------------------------------------------------------- */
+  for (let i = 0; i < 9; i++) {
+    spawnEmoji(bgLayer, { opacity: 0.3, size: [14, 26], duration: [12, 20], delay: Math.random() * 9 });
+  }
+  const bgTimer = setInterval(() => {
+    spawnEmoji(bgLayer, { opacity: 0.32, size: [14, 28], duration: [11, 18] });
+  }, 800);
+
+  /* ---------------------------------------------------------
+     The "No" button that runs away
+  --------------------------------------------------------- */
+  const noBtn = document.getElementById('noBtn');
+  const yesBtn = document.getElementById('yesBtn');
+  const askScreen = document.getElementById('askScreen');
+  const celebrateScreen = document.getElementById('celebrateScreen');
+
+  const NO_LABELS = ['No', 'Are you sure?', 'Really sure? \u{1F605}', 'Think again…', 'Last chance!', 'Pretty please? \u{1F97A}'];
+  let dodges = 0;
+  let lastDodge = 0;
+
+  function dodge(e) {
+    if (e) e.preventDefault();
+
+    const now = Date.now();
+    if (now - lastDodge < 120) return;   // ignore duplicate pointer/click events
+    lastDodge = now;
+    dodges++;
+
+    const pad = 14;
+    const w = noBtn.offsetWidth;
+    const h = noBtn.offsetHeight;
+    const rect = noBtn.getBoundingClientRect();
+
+    let x = pad, y = pad;
+    for (let i = 0; i < 30; i++) {
+      x = rand(pad, Math.max(pad, window.innerWidth - w - pad));
+      y = rand(pad, Math.max(pad, window.innerHeight - h - pad));
+      if (Math.hypot(x - rect.left, y - rect.top) > Math.min(220, window.innerWidth * 0.45)) break;
+    }
+
+    noBtn.style.position = 'fixed';
+    noBtn.style.left = x.toFixed(0) + 'px';
+    noBtn.style.top = y.toFixed(0) + 'px';
+    noBtn.style.transform = 'scale(' + Math.max(0.65, 1 - dodges * 0.035).toFixed(2) + ')';
+    noBtn.textContent = NO_LABELS[Math.min(dodges, NO_LABELS.length - 1)];
+  }
+
+  noBtn.addEventListener('mouseover', dodge);      // desktop hover
+  noBtn.addEventListener('pointerdown', dodge);    // touch + mouse press
+  noBtn.addEventListener('click', dodge);
+
+  // keep the runaway button on screen if the phone rotates / resizes
+  window.addEventListener('resize', () => {
+    if (noBtn.style.position !== 'fixed') return;
+    const w = noBtn.offsetWidth;
+    const h = noBtn.offsetHeight;
+    let x = parseFloat(noBtn.style.left) || 0;
+    let y = parseFloat(noBtn.style.top) || 0;
+    x = Math.min(x, Math.max(14, window.innerWidth - w - 14));
+    y = Math.min(y, Math.max(14, window.innerHeight - h - 14));
+    noBtn.style.left = x + 'px';
+    noBtn.style.top = y + 'px';
+  });
+
+  /* ---------------------------------------------------------
+     She said YES!
+  --------------------------------------------------------- */
+  let loveTimer = null;
+
+  function celebrateBurst() {
+    clearInterval(bgTimer);
+    for (let i = 0; i < 45; i++) {
+      spawnEmoji(loveLayer, {
+        size: [20, 46],
+        duration: [6, 12],
+        delay: Math.random() * 1.2,
+        drift: 130
+      });
+    }
+    loveTimer = setInterval(() => {
+      spawnEmoji(loveLayer, { size: [18, 40], duration: [7, 13], drift: 120 });
+    }, 550);
+  }
+
+  yesBtn.addEventListener('click', () => {
+    noBtn.remove();
+    askScreen.classList.remove('active');
+    celebrateScreen.classList.add('active');
+    celebrateBurst();
+  });
+
+  /* ---------------------------------------------------------
+     Extra love on demand
+  --------------------------------------------------------- */
+  document.getElementById('moreLove').addEventListener('click', (e) => {
+    e.stopPropagation();
+    for (let i = 0; i < 16; i++) {
+      spawnEmoji(loveLayer, {
+        size: [18, 44],
+        duration: [6, 11],
+        delay: Math.random() * 0.6,
+        drift: 150
+      });
+    }
+  });
+
+  celebrateScreen.addEventListener('click', () => {
+    for (let i = 0; i < 7; i++) {
+      spawnEmoji(loveLayer, { size: [18, 38], duration: [6, 11], drift: 130 });
+    }
+  });
+</script>
+</body>
+</html>
