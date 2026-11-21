@@ -136,11 +136,77 @@
     box-shadow: 0 8px 20px rgba(214, 51, 108, 0.18);
   }
   .heart-btn:active { transform: scale(.97); }
+
+  /* ---------- animated photo polaroids ---------- */
+  #celebrateScreen .card {
+    max-height: 92vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .photo-strip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(10px, 3.5vw, 20px);
+    margin: clamp(16px, 4vw, 26px) 0 clamp(4px, 1.5vw, 8px);
+  }
+
+  .polaroid {
+    background: #fff;
+    padding: 7px 7px 24px;
+    border-radius: 6px;
+    width: clamp(100px, 28vw, 148px);
+    box-shadow:
+      0 12px 26px rgba(214, 51, 108, 0.22),
+      0 1px 0 rgba(0, 0, 0, 0.04);
+    opacity: 0;
+    transform: translateY(16px) rotate(var(--tilt, -6deg));
+    will-change: transform, opacity;
+  }
+
+  .polaroid img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: center 20%;
+    border-radius: 3px;
+    background: #ffeef5;
+  }
+
+  .polaroid .caption {
+    margin-top: 7px;
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    font-size: clamp(0.78rem, 3vw, 0.95rem);
+    line-height: 1;
+    color: #c2406d;
+    text-align: center;
+  }
+
+  #celebrateScreen.active .polaroid {
+    animation:
+      photoIn 0.9s cubic-bezier(0.2, 0.8, 0.25, 1) forwards,
+      bob 5.5s ease-in-out infinite;
+    animation-delay: var(--inDelay, 0s), calc(var(--inDelay, 0s) + 0.9s);
+  }
+
+  @keyframes photoIn {
+    to {
+      opacity: 1;
+      transform: translateY(0) rotate(var(--tilt, -6deg));
+    }
+  }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(var(--tilt, -6deg)); }
+    50%      { transform: translateY(-7px) rotate(var(--tilt, -6deg)); }
+  }
+
 </style>
 </head>
 <body>
 
-  <!-- soft ambient hearts behind everything -->
   <div class="layer" id="bgLayer"></div>
 
   <!-- ===== Screen 1: the question ===== -->
@@ -167,17 +233,25 @@
         You are my favourite hello and my forever. I love you more than words can ever say. &#10084;&#65039;
       </p>
       <p class="signature">Forever starts today &mdash; and I&rsquo;m already yours. — Murali</p>
+
+      <div class="photo-strip">
+        <div class="polaroid" style="--tilt: -6deg; --inDelay: 0s;">
+          <img src="WhatsApp%20Image%202026-11-21%20at%2011.43.46%20PM.jpeg" alt="Us" />
+          <p class="caption">Us</p>
+        </div>
+        <div class="polaroid" style="--tilt: 4deg; --inDelay: 0.25s;">
+          <img src="WhatsApp%20Image%202026-11-21%20at%2011.43.46%20PM%20(1).jpeg" alt="Us" />
+          <p class="caption">Us</p>
+        </div>
+      </div>
+
       <button class="btn heart-btn" id="moreLove" type="button">Tap for more love &#128150;</button>
     </div>
   </section>
 
-  <!-- hearts that float above the congratulations card -->
   <div class="layer" id="loveLayer"></div>
 
 <script>
-  /* ---------------------------------------------------------
-     Helpers
-  --------------------------------------------------------- */
   const FLOATING = ['\u{1F496}','\u{1F495}','\u{1F497}','\u{1F49E}','❤️','✨','\u{1F339}','\u{1F490}','\u{1F970}','\u{1F60D}','\u{1F48D}','\u{1F389}','\u{1F498}'];
   const rand = (min, max) => min + Math.random() * (max - min);
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -209,9 +283,6 @@
     setTimeout(() => el.remove(), life);
   }
 
-  /* ---------------------------------------------------------
-     Ambient hearts on the asking screen
-  --------------------------------------------------------- */
   for (let i = 0; i < 9; i++) {
     spawnEmoji(bgLayer, { opacity: 0.3, size: [14, 26], duration: [12, 20], delay: Math.random() * 9 });
   }
@@ -219,9 +290,6 @@
     spawnEmoji(bgLayer, { opacity: 0.32, size: [14, 28], duration: [11, 18] });
   }, 800);
 
-  /* ---------------------------------------------------------
-     The "No" button that runs away
-  --------------------------------------------------------- */
   const noBtn = document.getElementById('noBtn');
   const yesBtn = document.getElementById('yesBtn');
   const askScreen = document.getElementById('askScreen');
@@ -233,9 +301,8 @@
 
   function dodge(e) {
     if (e) e.preventDefault();
-
     const now = Date.now();
-    if (now - lastDodge < 120) return;   // ignore duplicate pointer/click events
+    if (now - lastDodge < 120) return;
     lastDodge = now;
     dodges++;
 
@@ -258,11 +325,10 @@
     noBtn.textContent = NO_LABELS[Math.min(dodges, NO_LABELS.length - 1)];
   }
 
-  noBtn.addEventListener('mouseover', dodge);      // desktop hover
-  noBtn.addEventListener('pointerdown', dodge);    // touch + mouse press
+  noBtn.addEventListener('mouseover', dodge);
+  noBtn.addEventListener('pointerdown', dodge);
   noBtn.addEventListener('click', dodge);
 
-  // keep the runaway button on screen if the phone rotates / resizes
   window.addEventListener('resize', () => {
     if (noBtn.style.position !== 'fixed') return;
     const w = noBtn.offsetWidth;
@@ -275,9 +341,6 @@
     noBtn.style.top = y + 'px';
   });
 
-  /* ---------------------------------------------------------
-     She said YES!
-  --------------------------------------------------------- */
   let loveTimer = null;
 
   function celebrateBurst() {
@@ -302,9 +365,6 @@
     celebrateBurst();
   });
 
-  /* ---------------------------------------------------------
-     Extra love on demand
-  --------------------------------------------------------- */
   document.getElementById('moreLove').addEventListener('click', (e) => {
     e.stopPropagation();
     for (let i = 0; i < 16; i++) {
